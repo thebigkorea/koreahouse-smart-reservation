@@ -59,10 +59,6 @@
     .btn-light{background:#f0ebe1;color:#263238}
     .btn-green{background:#dcefd3;color:#2e7d32}
     .btn-yellow{background:#fff1c6;color:#8a5a00}
-    .btn-blue{background:#dbeafe;color:#1d4ed8}
-    .btn-purple{background:#ede9fe;color:#6d28d9}
-    .btn-danger{background:#fee2e2;color:#b91c1c}
-    .btn-disabled{background:#eceff1!important;color:#90a4ae!important;cursor:not-allowed!important}
     .cards{
       display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:22px;
     }
@@ -211,7 +207,6 @@
   display:flex;
   gap:6px;
   justify-content:center;
-  flex-wrap:wrap;
 }
 
 .table-actions button{
@@ -220,20 +215,132 @@
   font-size:12px;
 }
 
-.status-icons{
-  display:inline-flex;
-  gap:4px;
-  margin-left:6px;
-  vertical-align:middle;
-  font-size:14px;
-}
 
-.customer-cell{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  justify-content:flex-start;
-}
+    /* 좌석 배치도 */
+    .seat-layout-panel{
+      grid-column:1/-1;
+      background:#fffdf8;
+      border:1px solid #eee0c8;
+      border-radius:20px;
+      padding:16px;
+      margin-top:4px;
+    }
+    .seat-layout-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:12px;
+      font-weight:900;
+      color:#18252d;
+    }
+    .seat-selected-box{
+      background:#f8f2e6;
+      border:1px solid #eee0c8;
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:14px;
+      color:#455a64;
+      font-weight:900;
+    }
+    .seat-legend{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin:10px 0 14px;
+      font-size:12px;
+      font-weight:900;
+      color:#60747d;
+    }
+    .seat-legend span{
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      background:#f8f2e6;
+      padding:6px 9px;
+      border-radius:999px;
+      border:1px solid #eee0c8;
+    }
+    .dot-seat{
+      width:10px;height:10px;border-radius:50%;display:inline-block;
+    }
+    .dot-free{background:#dcefd3;border:1px solid #77a86f}
+    .dot-selected{background:#d8bd74;border:1px solid #9b7b27}
+    .dot-disabled{background:#eceff1;border:1px solid #b0bec5}
+    .seat-map{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(150px,1fr));
+      gap:14px;
+    }
+    .seat-zone{
+      background:#f8f2e6;
+      border:1px solid #eee0c8;
+      border-radius:18px;
+      padding:14px;
+    }
+    .seat-zone h4{
+      margin:0 0 10px;
+      font-size:15px;
+      font-weight:900;
+      color:#18252d;
+    }
+    .seat-buttons{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:8px;
+    }
+    .seat-zone.compact .seat-buttons{grid-template-columns:repeat(3,1fr)}
+    .seat-btn{
+      border:1px solid #ded2bd;
+      background:#fffdf8;
+      color:#18252d;
+      border-radius:13px;
+      padding:10px 8px;
+      cursor:pointer;
+      font-weight:900;
+      font-size:13px;
+      line-height:1.2;
+      transition:.15s ease;
+    }
+    .seat-btn small{
+      display:block;
+      margin-top:3px;
+      font-size:11px;
+      color:#78909c;
+      font-weight:900;
+    }
+    .seat-btn:hover:not(.disabled){
+      transform:translateY(-1px);
+      box-shadow:0 6px 14px rgba(0,0,0,.08);
+      border-color:#d8bd74;
+    }
+    .seat-btn.selected{
+      background:#d8bd74;
+      color:#111;
+      border-color:#b99b4c;
+      box-shadow:0 8px 18px rgba(216,189,116,.28);
+    }
+    .seat-btn.selected small{color:#3b2e10}
+    .seat-btn.disabled{
+      background:#eceff1;
+      color:#90a4ae;
+      cursor:not-allowed;
+      opacity:.72;
+    }
+    .seat-note{
+      margin-top:12px;
+      font-size:12px;
+      font-weight:900;
+      color:#78909c;
+      line-height:1.5;
+    }
+    @media(max-width:1100px){
+      .seat-map{grid-template-columns:repeat(2,1fr)}
+    }
+    @media(max-width:720px){
+      .seat-map{grid-template-columns:1fr}
+    }
+
   </style>
 </head>
 
@@ -491,23 +598,32 @@
 
         <div>
           <label>인원 *</label>
-          <input type="number" id="people" placeholder="예: 4">
+          <input type="number" id="people" placeholder="예: 4" oninput="renderSeatMap()">
         </div>
 
         <details open>
           <summary>상세 정보 입력</summary>
 
           <div class="form-grid">
-            <div>
+            <div class="full">
               <label>좌석</label>
-              <select id="seat" onchange="checkSeatSample()">
-                <option value="">좌석 선택</option>
-                <option>홀</option>
-                <option>청우정</option>
-                <option>룸</option>
-                <option>별실</option>
-                <option>기타</option>
-              </select>
+              <input type="hidden" id="seat">
+              <div class="seat-layout-panel">
+                <div class="seat-layout-head">
+                  <div>좌석 배치도에서 선택</div>
+                  <div class="seat-selected-box" id="selectedSeatText">선택된 좌석 없음</div>
+                </div>
+                <div class="seat-legend">
+                  <span><i class="dot-seat dot-free"></i>선택 가능</span>
+                  <span><i class="dot-seat dot-selected"></i>현재 선택</span>
+                  <span><i class="dot-seat dot-disabled"></i>인원 초과</span>
+                </div>
+                <div class="seat-map" id="seatMap"></div>
+                <div class="seat-note">
+                  ※ 예약 인원을 입력하면 수용 인원보다 작은 좌석은 자동으로 비활성화됩니다.<br>
+                  ※ 금액은 운영 상황에 따라 변경될 수 있어 표시하지 않습니다.
+                </div>
+              </div>
             </div>
 
             <div>
@@ -568,6 +684,7 @@
 
     function openModal(){
       document.getElementById("modalBg").style.display = "flex";
+      renderSeatMap();
     }
 
     function closeModal(){
@@ -601,6 +718,84 @@
 
       document.getElementById("seatNotice").style.display =
         date && time && seat ? "block" : "none";
+    }
+
+
+    const SEAT_ZONES = [
+      { title:"룸/별실", compact:false, seats:["청우정","녹음정","우금헌","소화당"] },
+      { title:"A구역", compact:true, seats:["A1","A2","A3","A4","A5","A6","A7"] },
+      { title:"B구역", compact:true, seats:["B5","B6","B7","B9","B10"] },
+      { title:"C구역", compact:true, seats:["C1","C2","C3","C4","C5","C6"] },
+      { title:"D구역", compact:true, seats:["D1","D2","D3","D4"] },
+      { title:"분리석", compact:true, seats:["분A3","분A5","분C4","분C5"] },
+      { title:"중정", compact:true, seats:["중정1","중정2","중정3","중정4","중정5"] }
+    ];
+
+    const SEAT_CAPACITY = {
+      "청우정":8,
+      "녹음정":6,"우금헌":6,"소화당":6,
+      "A1":4,"A2":4,"A3":6,"A4":4,"A5":6,"A6":4,"A7":4,
+      "B5":4,"B6":4,"B7":4,"B9":4,"B10":4,
+      "C1":4,"C2":4,"C3":4,"C4":6,"C5":6,"C6":4,
+      "D1":2,"D2":2,"D3":2,"D4":4,
+      "분A3":2,"분A5":2,"분C4":2,"분C5":2,
+      "중정1":2,"중정2":2,"중정3":2,"중정4":2,"중정5":2
+    };
+
+    function renderSeatMap(){
+      const map = document.getElementById("seatMap");
+      if(!map) return;
+
+      const people = Number(document.getElementById("people")?.value || 0);
+      const selected = document.getElementById("seat")?.value || "";
+      const selectedText = document.getElementById("selectedSeatText");
+
+      if(selectedText){
+        selectedText.textContent = selected
+          ? selected + " · " + (SEAT_CAPACITY[selected] || "-") + "인석"
+          : "선택된 좌석 없음";
+      }
+
+      map.innerHTML = SEAT_ZONES.map(function(zone){
+        const buttons = zone.seats.map(function(name){
+          const cap = SEAT_CAPACITY[name] || 0;
+          const disabled = people > 0 && cap > 0 && people > cap;
+          const cls = ["seat-btn"];
+          if(selected === name) cls.push("selected");
+          if(disabled) cls.push("disabled");
+
+          return `
+            <button type="button"
+                    class="${cls.join(" ")}"
+                    onclick="selectSeat('${name}')"
+                    ${disabled ? "disabled" : ""}>
+              ${name}
+              <small>${cap}인석</small>
+            </button>
+          `;
+        }).join("");
+
+        return `
+          <div class="seat-zone ${zone.compact ? "compact" : ""}">
+            <h4>${zone.title}</h4>
+            <div class="seat-buttons">${buttons}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function selectSeat(name){
+      const people = Number(document.getElementById("people")?.value || 0);
+      const cap = SEAT_CAPACITY[name] || 0;
+
+      if(people > 0 && cap > 0 && people > cap){
+        alert("선택한 좌석은 " + cap + "인석입니다. 현재 인원 " + people + "명은 배정할 수 없습니다.");
+        return;
+      }
+
+      document.getElementById("seat").value = name;
+      renderSeatMap();
+      checkSeatSample();
     }
 
     function submitSample(){
@@ -669,6 +864,7 @@
     let editingReservationNo = "";
 
 document.addEventListener("DOMContentLoaded", function(){
+  renderSeatMap();
   loadReservations();
 });
 
@@ -721,22 +917,11 @@ function renderReservationTable(){
   }
 
   tbody.innerHTML = list.map(function(r){
-    const depositDone = String(r.depositStatus || "").includes("입금완료");
-    const confirmed = String(r.reserveStatus || "").includes("예약확정");
-    const messageDone = String(r.confirmSms || "").includes("발송") ||
-                        String(r.beforeSms || "").includes("발송");
-    const statusIcon = makeStatusIcons(r);
-
     return `
       <tr>
         <td>${escapeHtml(r.reserveDate)}</td>
         <td><b>${escapeHtml(r.reserveTime)}</b></td>
-        <td class="left">
-          <span class="customer-cell">
-            <b>${escapeHtml(r.customerName)}</b>
-            ${statusIcon}
-          </span>
-        </td>
+        <td class="left"><b>${escapeHtml(r.customerName)}</b></td>
         <td>${escapeHtml(r.phone)}</td>
         <td>${escapeHtml(r.people)}명</td>
         <td>${escapeHtml(r.seat)}</td>
@@ -746,38 +931,16 @@ function renderReservationTable(){
         <td>${escapeHtml(r.staff)}</td>
         <td>
           <div class="table-actions">
-            <button class="btn btn-light" onclick="showReservationDetail('${r.reservationNo}')">📄 상세</button>
-            <button class="btn btn-blue" onclick="openEditReservation('${r.reservationNo}')">✏ 수정</button>
-            <button class="btn ${depositDone ? 'btn-disabled' : 'btn-green'}"
-                    ${depositDone ? 'disabled' : ''}
-                    onclick="markDepositDone('${r.reservationNo}')">
-              ${depositDone ? '💰 입금완료' : '💰 입금'}
-            </button>
-            <button class="btn ${confirmed ? 'btn-disabled' : 'btn-green'}"
-                    ${confirmed ? 'disabled' : ''}
-                    onclick="confirmReservation('${r.reservationNo}')">
-              ${confirmed ? '✅ 확정완료' : '✅ 확정'}
-            </button>
-            <button class="btn btn-purple" onclick="openMessageModal('${r.reservationNo}')">
-              ${messageDone ? '✅ 문자완료' : '💬 문자'}
-            </button>
+            <button class="btn btn-light" onclick="showReservationDetail('${r.reservationNo}')">상세</button>
+            <button class="btn btn-light" onclick="openEditReservation('${r.reservationNo}')">수정</button>
+            <button class="btn btn-green" onclick="markDepositDone('${r.reservationNo}')">입금</button>
+            <button class="btn btn-light" onclick="confirmReservation('${r.reservationNo}')">확정</button>
+            <button class="btn btn-yellow" onclick="openMessageModal('${r.reservationNo}')">문자</button>
           </div>
         </td>
       </tr>
     `;
   }).join("");
-}
-
-function makeStatusIcons(r){
-  const icons = [];
-
-  if(String(r.depositStatus || "").includes("입금완료")) icons.push("💰");
-  if(String(r.reserveStatus || "").includes("예약확정")) icons.push("✅");
-  if(String(r.confirmSms || "").includes("발송") || String(r.beforeSms || "").includes("발송")) icons.push("💬");
-  if(String(r.reserveStatus || "").includes("노쇼")) icons.push("⚠️");
-
-  if(!icons.length) return "";
-  return `<span class="status-icons">${icons.join("")}</span>`;
 }
 
 function updateDashboardCards(list){
@@ -817,8 +980,8 @@ function badgeText(text){
   let cls = "gray";
 
   if (t.includes("확정") || t.includes("완료")) cls = "ok";
-  if (t.includes("대기") || t.includes("미입금") || t.includes("접수")) cls = "wait";
-  if (t.includes("취소") || t.includes("노쇼")) cls = "gray";
+  if (t.includes("대기") || t.includes("미입금")) cls = "wait";
+  if (t.includes("취소")) cls = "wait";
 
   return `<span class="badge ${cls}">${escapeHtml(t)}</span>`;
 }
@@ -959,7 +1122,7 @@ function showReservationDetail(reservationNo){
         <br><br>
     <div class="table-actions">
       <button class="btn btn-yellow" onclick="markNoShow('${item.reservationNo}')">노쇼</button>
-      <button class="btn btn-danger" onclick="cancelReservation('${item.reservationNo}')">취소</button>
+      <button class="btn btn-light" onclick="cancelReservation('${item.reservationNo}')">취소</button>
     </div>
   `;
 
@@ -998,6 +1161,7 @@ function openEditReservation(reservationNo){
   document.getElementById("deposit").value = item.deposit;
   document.getElementById("staff").value = item.staff;
   document.getElementById("memo").value = item.memo || "";
+  renderSeatMap();
 
   // 상세 모달이 열려있다면 닫기
   closeDetailModal();
@@ -1036,8 +1200,9 @@ function cancelReservation(reservationNo){
       }
 
       alert("예약이 취소되었습니다.");
-      closeDetailModal();
+
       loadReservations();
+      loadDashboard();
 
     })
     .withFailureHandler(function(err){
