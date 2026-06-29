@@ -267,6 +267,7 @@
     .dot-free{background:#dcefd3;border:1px solid #77a86f}
     .dot-selected{background:#d8bd74;border:1px solid #9b7b27}
     .dot-disabled{background:#eceff1;border:1px solid #b0bec5}
+    .dot-warn{background:#ffe0b2;border:1px solid #fb8c00}
     .seat-map{
       display:grid;
       grid-template-columns:repeat(4,minmax(150px,1fr));
@@ -321,11 +322,19 @@
       box-shadow:0 8px 18px rgba(216,189,116,.28);
     }
     .seat-btn.selected small{color:#3b2e10}
-    .seat-btn.disabled{
-      background:#eceff1;
-      color:#90a4ae;
-      cursor:not-allowed;
-      opacity:.72;
+    .seat-btn.unselected-small{
+      background:#f5f7f8;
+      color:#60747d;
+    }
+    .seat-total-ok{
+      background:#dcefd3 !important;
+      color:#2e7d32 !important;
+      border-color:#9ccc9c !important;
+    }
+    .seat-total-warn{
+      background:#fff1c6 !important;
+      color:#8a5a00 !important;
+      border-color:#f0c45f !important;
     }
     .seat-note{
       margin-top:12px;
@@ -615,8 +624,8 @@
                 </div>
                 <div class="seat-legend">
                   <span><i class="dot-seat dot-free"></i>선택 가능</span>
-                  <span><i class="dot-seat dot-selected"></i>현재 선택</span>
-                  <span><i class="dot-seat dot-disabled"></i>인원 초과</span>
+                  <span><i class="dot-seat dot-selected"></i>선택 좌석</span>
+                  <span><i class="dot-seat dot-warn"></i>총 수용인원 부족</span>
                 </div>
                 <div class="seat-map" id="seatMap"></div>
                 <div class="seat-note">
@@ -742,33 +751,62 @@
       "중정1":2,"중정2":2,"중정3":2,"중정4":2,"중정5":2
     };
 
+    function getSelectedSeats(){
+      const raw = document.getElementById("seat")?.value || "";
+      return raw.split(",").map(v => v.trim()).filter(Boolean);
+    }
+
+    function setSelectedSeats(list){
+      document.getElementById("seat").value = list.join(", ");
+    }
+
+    function getSelectedCapacity(list){
+      return list.reduce(function(sum, name){
+        return sum + Number(SEAT_CAPACITY[name] || 0);
+      }, 0);
+    }
+
     function renderSeatMap(){
       const map = document.getElementById("seatMap");
       if(!map) return;
 
       const people = Number(document.getElementById("people")?.value || 0);
-      const selected = document.getElementById("seat")?.value || "";
+      const selectedList = getSelectedSeats();
+      const selectedTotal = getSelectedCapacity(selectedList);
       const selectedText = document.getElementById("selectedSeatText");
 
       if(selectedText){
-        selectedText.textContent = selected
-          ? selected + " · " + (SEAT_CAPACITY[selected] || "-") + "인석"
-          : "선택된 좌석 없음";
+        if(selectedList.length){
+          const status = people > 0
+            ? (selectedTotal >= people ? "가능" : "부족")
+            : "인원 입력 전";
+
+          selectedText.textContent =
+            selectedList.join(", ") +
+            " · 총 " + selectedTotal + "인석" +
+            (people ? " / 예약 " + people + "명 · " + status : "");
+
+          selectedText.classList.toggle("seat-total-ok", people > 0 && selectedTotal >= people);
+          selectedText.classList.toggle("seat-total-warn", people > 0 && selectedTotal < people);
+        }else{
+          selectedText.textContent = "선택된 좌석 없음";
+          selectedText.classList.remove("seat-total-ok", "seat-total-warn");
+        }
       }
 
       map.innerHTML = SEAT_ZONES.map(function(zone){
         const buttons = zone.seats.map(function(name){
           const cap = SEAT_CAPACITY[name] || 0;
-          const disabled = people > 0 && cap > 0 && people > cap;
+          const selected = selectedList.includes(name);
           const cls = ["seat-btn"];
-          if(selected === name) cls.push("selected");
-          if(disabled) cls.push("disabled");
+
+          if(selected) cls.push("selected");
+          if(!selected && people > 0 && cap < people) cls.push("unselected-small");
 
           return `
             <button type="button"
                     class="${cls.join(" ")}"
-                    onclick="selectSeat('${name}')"
-                    ${disabled ? "disabled" : ""}>
+                    onclick="toggleSeat('${name}')">
               ${name}
               <small>${cap}인석</small>
             </button>
@@ -784,16 +822,16 @@
       }).join("");
     }
 
-    function selectSeat(name){
-      const people = Number(document.getElementById("people")?.value || 0);
-      const cap = SEAT_CAPACITY[name] || 0;
+    function toggleSeat(name){
+      let selectedList = getSelectedSeats();
 
-      if(people > 0 && cap > 0 && people > cap){
-        alert("선택한 좌석은 " + cap + "인석입니다. 현재 인원 " + people + "명은 배정할 수 없습니다.");
-        return;
+      if(selectedList.includes(name)){
+        selectedList = selectedList.filter(v => v !== name);
+      }else{
+        selectedList.push(name);
       }
 
-      document.getElementById("seat").value = name;
+      setSelectedSeats(selectedList);
       renderSeatMap();
       checkSeatSample();
     }
@@ -816,6 +854,19 @@
 
       if (!data.reserveDate || !data.reserveTime || !data.customerName || !data.phone || !data.people) {
         alert("예약일, 예약시간, 고객명, 전화번호, 인원은 필수입니다.");
+        return;
+      }
+
+      const selectedSeats = getSelectedSeats();
+      const selectedCapacity = getSelectedCapacity(selectedSeats);
+
+      if (!selectedSeats.length) {
+        alert("좌석을 선택해 주세요.");
+        return;
+      }
+
+      if (selectedCapacity < Number(data.people || 0)) {
+        alert("선택한 좌석의 총 수용인원은 " + selectedCapacity + "명입니다. 예약 인원 " + data.people + "명을 수용하려면 좌석을 추가로 선택해 주세요.");
         return;
       }
 
