@@ -531,3 +531,37 @@ function updateReservation(data){
     message:"예약번호를 찾을 수 없습니다."
   };
 }
+function markNoShow(reservationNo, staff, reason){
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("Reservations");
+  const row = findReservationRow_(reservationNo);
+
+  if(!row){
+    return {
+      ok:false,
+      message:"예약을 찾을 수 없습니다."
+    };
+  }
+
+  const phone = sheet.getRange(row, 6).getValue();
+  const oldStatus = sheet.getRange(row, 13).getValue();
+
+  sheet.getRange(row, 13).setValue("노쇼");
+  sheet.getRange(row, 21).setValue(new Date());
+
+  increaseCustomerNoShowCount(phone);
+
+  writeReservationLog_(
+    reservationNo,
+    "노쇼",
+    "예약상태",
+    oldStatus,
+    "노쇼",
+    (staff || "") + " / " + (reason || "")
+  );
+
+  return {
+    ok:true,
+    message:"노쇼 처리되었습니다."
+  };
+}

@@ -48,3 +48,6 @@ function markDepositDoneApi(reservationNo, staff){
 function confirmReservationApi(reservationNo, staff){
   return confirmReservation(reservationNo, staff);
 }
+function markNoShowApi(reservationNo, staff, reason){
+  return markNoShow(reservationNo, staff, reason);
+}
